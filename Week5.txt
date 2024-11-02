@@ -1,0 +1,225 @@
+Tasks:
+1. Creating Collections
+// Collection: Employees
+{
+  EmployeeID: 1,
+  FirstName: "Alice",
+  LastName: "Johnson",
+  DateOfBirth: ISODate("1990-01-15"),
+  Department: "HR"
+}
+
+// Collection: Orders
+{
+  OrderID: 101,
+  OrderDate: ISODate("2022-10-05"),
+  CustomerID: 1,
+  Amount: 250.00
+}
+
+2. Inserting Data into Collections
+->db.Employees.insertOne({
+  EmployeeID: 1,
+  FirstName: "Alice",           // Insert a new employee into Employees
+  LastName: "Johnson",
+  DateOfBirth: ISODate("1990-01-15"),
+  Department: "HR"
+});
+
+->db.Orders.insertMany([
+  { OrderID: 101, OrderDate: ISODate("2022-10-05"), CustomerID: 1, Amount: 250.00 },    // Insert multiple records into Orders
+  { OrderID: 102, OrderDate: ISODate("2022-11-15"), CustomerID: 2, Amount: 150.00 },
+  { OrderID: 103, OrderDate: ISODate("2023-02-20"), CustomerID: 1, Amount: 300.00 }
+]);
+
+3. Selecting Data from Collections
+
+->db.Employees.find({});    // Select all documents from Employees
+
+->db.Orders.find({});    // Select all documents from Orders
+
+->db.Employees.find({}, { FirstName: 1, LastName: 1, _id: 0 });    // Select only FirstName and LastName from Employees
+
+->db.Orders.find({}, { OrderID: 1, Amount: 1, _id: 0 });    // Select OrderID and Amount from Orders
+
+4. Updating Data in a Collection
+
+->db.Employees.updateOne({ EmployeeID: 1 }, { $set: { Department: "Finance" } });   // Update Department of the employee with EmployeeID 1 to 'Finance'
+
+
+->db.Orders.updateOne({ OrderID: 102 }, { $set: { Amount: 500.00 } });   // Update Amount in Orders where OrderID is 102 to 500.00
+
+5. Deleting Data from a Collection
+
+->db.Employees.deleteOne({ EmployeeID: 1 });       // Delete the employee from Employees where EmployeeID is 1
+
+->db.Orders.deleteMany({ Amount: { $lt: 100 } });      // Delete all orders from Orders where Amount is less than 100
+
+6. Filtering Data with WHERE Clause
+
+->db.Employees.find({ Department: "HR" });     // Select all employees who work in the 'HR' department
+
+->db.Orders.find({ Amount: { $gt: 300 } });     // Select all orders with an Amount greater than 300
+
+7. Using AND / OR in Queries
+
+->db.Employees.find({ Department: "HR", DateOfBirth: { $gt: ISODate("1990-01-01") } });     // Select employees in 'HR' department born after '1990-01-01'
+
+
+->db.Orders.find({ Amount: { $gt: 300 }, OrderDate: { $lt: ISODate("2023-01-01") } });     // Select orders with Amount > 300 and OrderDate before '2023-01-01'
+
+
+->db.Employees.find({ Department: { $in: ["HR", "Finance"] } });     // Select employees in either 'HR' or 'Finance' department
+
+
+->db.Orders.find({ $or: [{ Amount: { $lt: 100 } }, { OrderDate: { $gt: ISODate("2023-01-01") } }] });   // Select orders with Amount < 100 or placed after '2023-01-01'
+
+8. Sorting Results with ORDER BY
+
+->db.Employees.find().sort({ LastName: 1 });   // Select all employees and order by LastName ascending
+
+->db.Orders.find().sort({ Amount: -1 });     // Select all orders and order by Amount descending
+ 
+ 9. Using Aggregate Functions
+
+->db.Employees.countDocuments({});     // Count the number of employees in Employees
+
+->db.Orders.countDocuments({});     // Count the number of orders in Orders
+
+->db.Orders.aggregate([{ $group: { _id: null, avgAmount: { $avg: "$Amount" } } }]);     // Find average Amount of all orders
+
+->db.Employees.aggregate([
+  {
+    $project: {
+      age: {
+        $subtract: [
+          { $year: "$$NOW" },              // Calculate average age of employees
+          { $year: "$DateOfBirth" }
+        ]
+      }
+    }
+  },
+  {
+    $group: { _id: null, avgAge: { $avg: "$age" } }
+  }
+]);
+
+10. Grouping Data with GROUP BY
+
+->db.Employees.aggregate([{ $group: { _id: "$Department", count: { $sum: 1 } } }]);     // Count the number of employees in each Department
+
+->db.Orders.aggregate([{ $group: { _id: "$CustomerID", totalAmount: { $sum: "$Amount" } } }]);    // Calculate the total Amount of orders for each CustomerID
+
+11. Using HAVING Clause
+
+->db.Employees.aggregate([
+  { $group: { _id: "$Department", count: { $sum: 1 } } },     // Find all departments with more than 5 employees
+  { $match: { count: { $gt: 5 } } }
+]);
+
+->db.Orders.aggregate([
+  { $group: { _id: "$CustomerID", totalAmount: { $sum: "$Amount" } } },     // Find all CustomerIDs with total order Amount greater than 1000
+  { $match: { totalAmount: { $gt: 1000 } } }
+]);
+
+12. Joining Collections
+
+->db.Employees.aggregate([
+  {
+    $lookup: {
+      from: "Orders",
+      localField: "EmployeeID",
+      foreignField: "CustomerID",     // Inner Join: Join Employees and Orders on CustomerID
+      as: "Orders"
+    }
+  },
+  { $unwind: "$Orders" },
+  { $project: { FirstName: 1, LastName: 1, "Orders.Amount": 1 } }
+]);
+
+->db.Employees.aggregate([
+  {
+    $lookup: {
+      from: "Orders",
+      localField: "EmployeeID",          // Left Join: Return all employees and their corresponding Order Amount if available
+      foreignField: "CustomerID",
+      as: "Orders"
+    }
+  },
+  { $project: { FirstName: 1, LastName: 1, Orders: { $ifNull: ["$Orders.Amount", "N/A"] } } }
+]);
+
+
+project:
+
+
+ 1. Creating Collections and Inserting Data
+->db.Patients.insertMany([
+  { PatientID: 1, Name: "Rajesh Kumar", DOB: ISODate("1990-04-15"), DoctorID: 201, DateAdded: ISODate("2020-10-15") },     // Insert patients
+  { PatientID: 2, Name: "Priya Sharma", DOB: ISODate("1985-06-20"), DoctorID: 202, DateAdded: ISODate("2019-08-10") }
+]);
+
+// Insert doctors
+->db.Doctors.insertMany([
+  { DoctorID: 201, Name: "Dr. Anil Mehta", Specialty: "Cardiology", Availability: ["Monday", "Wednesday", "Friday"] },
+  { DoctorID: 202, Name: "Dr. Sunita Reddy", Specialty: "Dermatology", Availability: ["Tuesday", "Thursday", "Saturday"] }
+]);
+
+// Insert appointments
+->db.Appointments.insertMany([
+  { AppointmentID: 1001, PatientID: 1, DoctorID: 201, Date: ISODate("2024-11-15"), Status: "Scheduled" },
+  { AppointmentID: 1002, PatientID: 2, DoctorID: 202, Date: ISODate("2024-11-16"), Status: "Scheduled" }
+]);
+
+2. Query to Select All Appointments for a Specific Doctor on a Given Date
+db.Appointments.find({
+  DoctorID: 201,
+  Date: ISODate("2024-11-15")
+});
+
+3. Update the Status of an Appointment After a Consultation
+db.Appointments.updateOne(
+  { AppointmentID: 1001 },
+  { $set: { Status: "Completed" } }
+);
+
+4. Delete Patient Records After a Certain Period (e.g., 5 Years)
+db.Patients.deleteMany({
+  DateAdded: { $lt: new Date(new Date().setFullYear(new Date().getFullYear() - 5)) }
+});
+
+5. Filter Appointments Based on the Doctor or Patient
+db.Appointments.find({
+  $or: [{ DoctorID: 201 }, { PatientID: 1 }]
+});
+
+ 6. Using AND / OR to Find Doctors with Specific Specialties and Availability
+// Find doctors with 'Cardiology' specialty and available on 'Monday'
+db.Doctors.find({
+  Specialty: "Cardiology",
+  Availability: "Monday"
+});
+
+// Find doctors with either 'Cardiology' or 'Dermatology' specialty
+db.Doctors.find({
+  Specialty: { $in: ["Cardiology", "Dermatology"] }
+});
+
+7. Sort Appointments by Date in Ascending Order
+db.Appointments.find().sort({ Date: 1 });
+
+8. Using Aggregate Functions to Count the Total Number of Patients Treated by Each Doctor
+db.Appointments.aggregate([
+  {
+    $group: {
+      _id: "$DoctorID",
+      totalPatients: { $addToSet: "$PatientID" }
+    }
+  },
+  {
+    $project: {
+      DoctorID: "$_id",
+      totalPatients: { $size: "$totalPatients" }
+    }
+  }
+]);
